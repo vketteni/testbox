@@ -1,0 +1,160 @@
+services:
+  # Mock HubSpot API
+  hubspot-api:
+    build:
+      context: ./hubspot-simulator
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - RATE_LIMIT_ENABLED=true
+      - WEBHOOK_URL=http://webhook-server:3000/webhook
+    volumes:
+      - ./data:/app/data
+    networks:
+      - benchmark-net
+
+  # Webhook notification service
+  webhook-server:
+    build:
+      context: ./webhook-service
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - benchmark-net
+
+  # Mock Databox API
+  databox-api:
+    build:
+      context: ./databox-simulator
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./data:/app/data
+    networks:
+      - benchmark-net
+
+  # Redis for caching and CDC
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - benchmark-net
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - benchmark-net
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    networks:
+      - benchmark-net
+
+  # Solution runners
+  direct-polling:
+    build:
+      context: ./solutions/direct-polling
+      dockerfile: Dockerfile
+    environment:
+      - HUBSPOT_API_URL=http://hubspot-api:3000
+      - DATABOX_API_URL=http://databox-api:3000
+      - REDIS_URL=redis://redis:6379
+      - PROMETHEUS_GATEWAY=http://prometheus:9091
+    volumes:
+      - ./data:/app/data
+    networks:
+      - benchmark-net
+    profiles:
+      - testing
+
+  webhook-sync:
+    build:
+      context: ./solutions/webhook-sync
+      dockerfile: Dockerfile
+    environment:
+      - HUBSPOT_API_URL=http://hubspot-api:3000
+      - DATABOX_API_URL=http://databox-api:3000
+      - WEBHOOK_URL=http://webhook-server:3000
+      - REDIS_URL=redis://redis:6379
+      - PROMETHEUS_GATEWAY=http://prometheus:9091
+    volumes:
+      - ./data:/app/data
+    networks:
+      - benchmark-net
+    profiles:
+      - testing
+
+  hybrid-cdc:
+    build:
+      context: ./solutions/hybrid-cdc
+      dockerfile: Dockerfile
+    environment:
+      - HUBSPOT_API_URL=http://hubspot-api:3000
+      - DATABOX_API_URL=http://databox-api:3000
+      - WEBHOOK_URL=http://webhook-server:3000
+      - REDIS_URL=redis://redis:6379
+      - PROMETHEUS_GATEWAY=http://prometheus:9091
+    volumes:
+      - ./data:/app/data
+    networks:
+      - benchmark-net
+    profiles:
+      - testing
+
+  # Benchmarking tools
+  benchmark-runner:
+    build:
+      context: ./benchmarking
+      dockerfile: Dockerfile
+    environment:
+      - HUBSPOT_API_URL=http://hubspot-api:3000
+      - DATABOX_API_URL=http://databox-api:3000
+      - REDIS_URL=redis://redis:6379
+      - PROMETHEUS_URL=http://prometheus:9090
+    volumes:
+      - ./data:/app/data
+      - ./reports:/app/reports
+    networks:
+      - benchmark-net
+    profiles:
+      - testing
+
+volumes:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  benchmark-net:
+    driver: bridge

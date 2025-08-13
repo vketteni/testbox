@@ -1,0 +1,34 @@
+{
+  "name": "hubspot-databox-benchmark",
+  "version": "1.0.0",
+  "description": "Benchmarking environment for HubSpot to Databox integration approaches",
+  "main": "index.js",
+  "scripts": {
+    "setup": "cp .env.example .env && docker-compose build",
+    "start:infrastructure": "docker-compose up -d hubspot-api webhook-server databox-api redis prometheus grafana",
+    "start:monitoring": "docker-compose up -d prometheus grafana",
+    "generate:data": "docker-compose run --rm benchmark-runner npm run generate-data",
+    "test:direct-polling": "docker-compose --profile testing up direct-polling",
+    "test:webhook-sync": "docker-compose --profile testing up webhook-sync",
+    "test:hybrid-cdc": "docker-compose --profile testing up hybrid-cdc",
+    "test:all": "docker-compose --profile testing up direct-polling webhook-sync hybrid-cdc",
+    "benchmark:run": "docker-compose --profile testing run --rm benchmark-runner npm run benchmark",
+    "benchmark:report": "docker-compose --profile testing run --rm benchmark-runner npm run generate-report",
+    "clean": "docker-compose down -v && docker system prune -f",
+    "logs": "docker-compose logs -f"
+  },
+  "keywords": [
+    "hubspot",
+    "databox",
+    "integration",
+    "benchmark",
+    "api",
+    "webhooks"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5"
+  }
+}

@@ -1,0 +1,48 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'hubspot-simulator'
+    static_configs:
+      - targets: ['hubspot-api:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'webhook-service'
+    static_configs:
+      - targets: ['webhook-server:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'databox-simulator'
+    static_configs:
+      - targets: ['databox-api:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'direct-polling-solution'
+    static_configs:
+      - targets: ['direct-polling:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'webhook-sync-solution'
+    static_configs:
+      - targets: ['webhook-sync:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'hybrid-cdc-solution'
+    static_configs:
+      - targets: ['hybrid-cdc:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
