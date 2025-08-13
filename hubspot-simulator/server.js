@@ -119,6 +119,10 @@ async function loadTestData() {
 function generateSampleData() {
   console.log('Generating sample companies...');
   for (let i = 0; i < 1000; i++) {
+    const createdAt = new Date(Date.now() - Math.random() * 86400000 * 365).toISOString();
+    const updatedAt = new Date(Date.now() - Math.random() * 86400000 * 30).toISOString();
+    const objectId = (i + 1).toString();
+    
     companies.push({
       id: uuidv4(),
       properties: {
@@ -126,11 +130,13 @@ function generateSampleData() {
         domain: `company${i + 1}.com`,
         industry: ['Technology', 'Healthcare', 'Finance', 'Manufacturing'][i % 4],
         founded_year: 2000 + (i % 24),
-        hs_lastmodifieddate: new Date(Date.now() - Math.random() * 86400000 * 365).toISOString(),
-        hs_object_id: i + 1
+        createdate: createdAt,
+        hs_lastmodifieddate: updatedAt,
+        hs_object_id: objectId
       },
-      createdAt: new Date(Date.now() - Math.random() * 86400000 * 365).toISOString(),
-      updatedAt: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString()
+      createdAt,
+      updatedAt,
+      archived: false
     });
   }
 }
@@ -163,7 +169,7 @@ async function sendWebhookNotification(eventType, objectType, objectId, properti
 app.get('/crm/v3/objects/companies', generalRateLimit, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 10, 100);
   const after = req.query.after || '';
-  const properties = req.query.properties ? req.query.properties.split(',') : ['name', 'domain'];
+  const properties = req.query.properties ? req.query.properties.split(',') : ['name', 'domain', 'hs_object_id', 'hs_lastmodifieddate', 'createdate'];
   
   let startIndex = 0;
   if (after) {
@@ -179,7 +185,8 @@ app.get('/crm/v3/objects/companies', generalRateLimit, (req, res) => {
       return acc;
     }, {}),
     createdAt: company.createdAt,
-    updatedAt: company.updatedAt
+    updatedAt: company.updatedAt,
+    archived: company.archived || false
   }));
   
   const paging = {
@@ -225,7 +232,10 @@ app.post('/crm/v3/objects/companies/search', searchRateLimit, (req, res) => {
     startIndex = filteredCompanies.findIndex(c => c.id === after) + 1;
   }
   
-  const results = filteredCompanies.slice(startIndex, startIndex + maxLimit);
+  const results = filteredCompanies.slice(startIndex, startIndex + maxLimit).map(company => ({
+    ...company,
+    archived: company.archived || false
+  }));
   const total = filteredCompanies.length;
   
   // Simulate longer delay for search
@@ -251,7 +261,10 @@ app.get('/crm/v3/objects/companies/:companyId', generalRateLimit, (req, res) => 
     });
   }
   
-  res.json(company);
+  res.json({
+    ...company,
+    archived: company.archived || false
+  });
 });
 
 // Update company (triggers webhook)
@@ -273,7 +286,10 @@ app.patch('/crm/v3/objects/companies/:companyId', generalRateLimit, async (req, 
   // Send webhook notification
   await sendWebhookNotification('company.propertyChange', 'company', company.id, company.properties);
   
-  res.json(company);
+  res.json({
+    ...company,
+    archived: company.archived || false
+  });
 });
 
 // Create company (triggers webhook)
