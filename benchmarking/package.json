@@ -1,0 +1,21 @@
+{
+  "name": "benchmarking-tools",
+  "version": "1.0.0",
+  "description": "Data generation and benchmarking tools",
+  "main": "data-generator.js",
+  "scripts": {
+    "generate-data": "node data-generator.js",
+    "benchmark": "node benchmark-runner.js",
+    "generate-report": "node report-generator.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.5",
+    "faker": "^5.5.3",
+    "uuid": "^9.0.1",
+    "prom-client": "^15.1.0",
+    "redis": "^4.6.12"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

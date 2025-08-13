@@ -149,6 +149,7 @@ services:
       - benchmark-net
     profiles:
       - testing
+    user: "0:0"
 
 volumes:
   redis-data:

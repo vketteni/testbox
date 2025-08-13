@@ -359,13 +359,36 @@ app.get('/simulate/outage/:duration', (req, res) => {
   res.json({ message: `Simulating ${req.params.duration}s outage` });
 });
 
+// Bulk data loading endpoint for testing
+app.post('/load-test-data', (req, res) => {
+  const { companies: newCompanies = [] } = req.body;
+  
+  if (!Array.isArray(newCompanies)) {
+    return res.status(400).json({
+      error: 'Companies must be an array'
+    });
+  }
+  
+  // Replace existing data with new data
+  if (newCompanies.length > 0) {
+    companies.push(...newCompanies);
+    console.log(`Loaded ${newCompanies.length} companies, total: ${companies.length}`);
+  }
+  
+  res.json({
+    message: `Loaded ${newCompanies.length} companies`,
+    totalCompanies: companies.length
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     dailyRequestCount,
-    dailyLimitRemaining: DAILY_LIMIT - dailyRequestCount
+    dailyLimitRemaining: DAILY_LIMIT - dailyRequestCount,
+    totalCompanies: companies.length
   });
 });
 
