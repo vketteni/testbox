@@ -1,0 +1,23 @@
+{
+  "name": "webhook-sync-solution",
+  "version": "1.0.0",
+  "description": "Webhook-driven sync solution for HubSpot to Databox integration",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "benchmark": "node benchmark.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.5",
+    "redis": "^4.6.12",
+    "prom-client": "^15.1.0",
+    "winston": "^3.11.0",
+    "crypto": "^1.0.1",
+    "bull": "^4.12.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

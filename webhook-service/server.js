@@ -143,8 +143,13 @@ app.post('/webhook', async (req, res) => {
   
   // Notify all relevant subscribers
   const notifications = [];
+  console.log(`Processing event: ${event.eventType} for ${event.objectType}, checking ${subscribers.size} subscribers`);
+  
   for (const [subscriptionId, subscription] of subscribers.entries()) {
-    if (!subscription.active) continue;
+    if (!subscription.active) {
+      console.log(`Skipping inactive subscription ${subscriptionId}`);
+      continue;
+    }
     
     // Check if subscriber is interested in this event type
     const eventMatch = subscription.events.some(subscribedEvent => {
@@ -153,10 +158,15 @@ app.post('/webhook', async (req, res) => {
              subscribedEvent.startsWith(event.objectType.toLowerCase());
     });
     
+    console.log(`Subscription ${subscriptionId}: events=${JSON.stringify(subscription.events)}, eventType=${event.eventType}, objectType=${event.objectType}, match=${eventMatch}`);
+    
     if (eventMatch) {
+      console.log(`Adding notification for subscription ${subscriptionId} to ${subscription.url}`);
       notifications.push(notifySubscriber(subscription, event));
     }
   }
+  
+  console.log(`Sending ${notifications.length} notifications`);
   
   // Wait for all notifications to complete
   const results = await Promise.allSettled(notifications);
@@ -210,6 +220,7 @@ async function notifySubscriber(subscription, event) {
     subscription.errorCount++;
     
     console.log(`✗ Failed to notify subscriber ${subscription.id}: ${error.message}`);
+    console.log(`✗ Error details:`, error.response?.status, error.response?.statusText, error.code);
     
     // Deactivate subscription after too many failures
     if (subscription.errorCount > 10) {

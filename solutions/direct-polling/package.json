@@ -1,0 +1,22 @@
+{
+  "name": "direct-polling-solution",
+  "version": "1.0.0",
+  "description": "Direct API polling solution for HubSpot to Databox integration",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "benchmark": "node benchmark.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.5",
+    "redis": "^4.6.12",
+    "prom-client": "^15.1.0",
+    "cron": "^3.1.6",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
